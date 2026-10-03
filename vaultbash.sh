@@ -2,9 +2,17 @@
 SOURCE_DIRS=("/etc" "/home/$USER/documents" "/var/log/syslog")
 BACKUP_DIR="/tmp/my_backups"
 TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
-BACKUP_FILE="backup_$TIMESTAMP.tar.gz"
 LOG_FILE="/tmp/backup.log"
+SNAPSHOT_FILE="$BACKUP_DIR/backup.snar"
 KEEP_DAYS=7
+
+if [ ! -f "$SNAPSHOT_FILE" ]; then
+    TYPE="full"
+else
+    TYPE="incr"   
+fi  
+
+BACKUP_FILE="backup_${TYPE}_$TIMESTAMP.tar.gz"
 
 log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> $"LOG_FILE"
@@ -15,18 +23,18 @@ if [ ! -d "$BACKUP_DIR" ]; then
     log_message "Создана директория для бэкапов: $BACKUP_DIR"
 fi
 
-log_message "Запуск базового бэкапа..."
+log_message "Запуск $TYPE бэкапа: $BACKUP_FILE"
 
-tar -czf "$BACKUP_DIR/$BACKUP_FILE" "${SOURCE_DIRS[0]}" >> $LOG_FILE 2>&1
+tar --listed-incremental="$SNAPSHOT_FILE" -czf "$BACKUP_DIR/$BACKUP_FILE" "${SOURCE_DIRS[0]}" >> $LOG_FILE 2>&1
 
 if [ $? -eq 0 ]; then
-    log_message "Бэкап успешно создан: $BACKUP_DIR/$BACKUP_FILE"
+    log_message "$TYPE Бэкап успешно создан: $BACKUP_DIR/$BACKUP_FILE"
 else 
-    log_message "Ошибка при создании бэкапа"
+    log_message "Ошибка при создании $TYPE бэкапа"
     exit 1
 fi
 
-log_message "Запуск очичтки архивов старше $KEEP_DAYS дней..."
+log_message "Запуск очистки архивов старше $KEEP_DAYS дней..."
 find "$BACKUP_DIR" -type f -name "backup_*.tar.gz" -mtime +$KEEP_DAYS -delete >> "$LOG_FILE" 2>&1
 
 if [ $? -eq 0 ]; then
