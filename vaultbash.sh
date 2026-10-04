@@ -34,6 +34,17 @@ else
     exit 1
 fi
 
+log_message "Проверка целостности архива $BACKUP_FILE"
+tar -tzf "$BACKUP_DIR/$BACKUP_FILE" > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    log_message "Проверка пройдена - архив целый"
+else
+    log_message "Критическая ошибка. Архив $BACKUP_FILE поврежден"
+    rm "$BACKUP_DIR/$BACKUP_FILE"
+    exit 1
+fi
+
+
 log_message "Запуск очистки архивов старше $KEEP_DAYS дней..."
 find "$BACKUP_DIR" -type f -name "backup_*.tar.gz" -mtime +$KEEP_DAYS -delete >> "$LOG_FILE" 2>&1
 
