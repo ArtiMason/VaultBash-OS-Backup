@@ -1,10 +1,12 @@
 #!/bin/bash
-SOURCE_DIRS=("/etc" "/home/$USER/documents" "/var/log/syslog")
-BACKUP_DIR="/tmp/my_backups"
-TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
-LOG_FILE="/tmp/backup.log"
-SNAPSHOT_FILE="$BACKUP_DIR/backup.snar"
-KEEP_DAYS=7
+CONFIG_FILE="$(dirname "$0")/backup.conf"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Конфигурационный файл не найден"
+    exit 1
+fi
+
+source "$CONFIG_FILE"
+
 
 if [ ! -f "$SNAPSHOT_FILE" ]; then
     TYPE="full"
