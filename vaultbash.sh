@@ -46,6 +46,17 @@ else
     exit 1
 fi
 
+if [ "$ENABLE_REMOTE" = true ]; then
+    log_message "Отправка архива на удаленный сервер: $REMOTE_TARGET"
+    rsync -az -e ssh "$BACKUP_DIR/$BACKUP_FILE" "$REMOTE_TARGET" >> "$LOG_FILE" 2>&1
+    if [ $? -eq 0 ]; then
+        log_message "Удаленная копия создана успешно"
+    else
+        log_message "Ошибка. Не удалось отправить файл на удаленный сервер"
+    fi
+fi    
+
+
 
 log_message "Запуск очистки архивов старше $KEEP_DAYS дней..."
 find "$BACKUP_DIR" -type f -name "backup_*.tar.gz" -mtime +$KEEP_DAYS -delete >> "$LOG_FILE" 2>&1
