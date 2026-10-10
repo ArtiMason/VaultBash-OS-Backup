@@ -31,9 +31,37 @@ restore_backup() {
     echo "Список доступных бэкапов:"
     ls -1 $BACKUP_DIR/backup_*
 
+    read -p "Введите имя файла для восстановления:" FILE_NAME
+
+    FULL_PATH="$BACKUP_DIR/$FILE_NAME"
+    if [ ! -f "$FULL_PATH" ]; then
+        echo "Ошибка. Файл не найден!"
+        exit 1
+    fi
+    if [[ "$FILE_NAME" == *.enc ]]; then
+        echo "Расшифровка файла..."
+        openssl enc -d -aes-256-cbc -in "$FULL_PATH" -out "${FULL_PATH%.enc}"
+        -k "$ENCRYPT_PASS" -pbkdf2
+        TARGET_FILE="${FULL_PATH%.enc}"
+    else
+        TARGET_FILE="$FULL_PATH"
+    fi
+
+    echo "Распаковка файла в текущую директорию..."
+    tar -xzf "$TARGET_FILE"
+    echo "Восстановление завершено."
+    if [[ "$FILE_NAME" == *.enc ]]; then 
+        rm "$TARGET_FILE"
+    fi
+
 }
 show_help() {
-
+    echo "Использование: $0 [опция] "
+    echo "Опции: "
+    echo "   (без опции) - Запуск обычного бэкапа"
+    echo "  --status     - Показать текущее состояние бэкапов"
+    echo "  --restore    - Интерактивное восстановление данных"
+    echo "  --help       - Показать справку"
 }
 
 case "$1" in
@@ -42,7 +70,7 @@ case "$1" in
         exit 0
         ;;
     --restore)
-        restore_backup)
+        restore_backup
         exit 0
         ;;
     --help)
